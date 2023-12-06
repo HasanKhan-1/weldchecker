@@ -12,36 +12,40 @@ import time
 import schedule
 import threading
 import xlwings as xw
-
 import time
 import os
-
-def generateFilename(h):
-    t = time.localtime()
-    date = time.strftime("%Y-%m-%d_", t)
-    date = date + '00'
-    file_name = "Weld_Tally_Report_" + date + ".csv"
-    return file_name
-
-def makeDir():
-    t = time.localtime()
-    month_year = time.strftime("%b-%Y", t)
-    day = time.strftime("%d")
-    dir = month_year
-    if(not os.path.isdir(dir)):
-        os.makedirs(dir)
-    return dir
 
 def runner():
     while True:
         schedule.run_pending()
         time.sleep(10)
 
+def generateFilename(h):
+    t = time.localtime()
+    date = time.strftime("%Y-%m-%d_", t)
+    shift = ""
+    if(23 <= h < 7):
+        shift = "Night"
+    elif(7 <= h < 15):
+        shift = "Morning"
+    else:   
+        shift = "Night"
+    date = date + shift + "_Shift"
+    file_name = "Weld_Tally_Report_" + date + ".csv"
+    return file_name
+
+def makeDir():
+    t = time.localtime()
+    month_year = time.strftime("%b-%Y", t)
+    dir = month_year
+    if(not os.path.isdir(dir)):
+        os.makedirs(dir)
+    return dir
+
 def removeBook(path):
     if not os.path.exists(path):
         warnings.warn("Path does not exist. Remove book failed.")
         return
-
     os.remove(path)
     
 def archiveBook():
@@ -49,11 +53,11 @@ def archiveBook():
     small_file = generateFilename(hour - 1)
     t = time.localtime()
     date = time.strftime("%Y-%m-%d", t)
-    big_file = "Tool_Crib_Log_" + date + ".csv"
+    big_file = "Weld_Tally_Report_" + date + ".csv"
     dir = makeDir()
     try: 
         with open(dir + '\\' + big_file, "x") as file:
-            file.write("Time, ID, Name, Part Number, Part Name, Quantity, Cost, Extended Cost\n")
+            file.write("Time, WeldReworkId, WeldReworkReasonCode\n")
     except FileExistsError:
         pass
     file = open(dir + '\\' + small_file, "r")
@@ -65,16 +69,6 @@ def archiveBook():
     file.close()
     bigger_file.close()
     os.remove(dir + '\\' + small_file)
-    # timeNow = datetime.now().strftime("%D %S").replace('/','-')
-    # if not os.path.exists('./Archives'):
-    #     warnings.warn("Path does not exist. Archive book failed.")
-    #     os.makedirs('./Archives')
-    #     return
-
-    # bookName = 'TC-' +timeNow+ '.xlsx'
-    # os.rename('kenobi1/test.xlsx', 'Archives/' + bookName)
-    # return bookName
-
 
 def initEmailServer():
 
@@ -95,37 +89,56 @@ def initEmailServer():
 
 def sendEmail(server):
     t = time.localtime()
-    # yesterday = timeNow - timedelta(1)
-   
     dir = makeDir()
-    # bookName = "Tool_Crib_Log-" + date + ".csv"
-    hour = int(time.strftime("%H"))
-    bookName = generateFilename(hour - 1)
-    tim = bookName[30:]
-    book = bookName.split(".")
-    bookName = book[0]
-    time.sleep(2)
-    bookName = bookName + ".xlsx"
-    timeName = datetime.now().strftime("%D %S").replace('/','-')
-    # Chech if server connection is active (it disconnects itself after a while)
+    t = time.localtime()
+    date = time.strftime("%Y-%m-%d", t)
+    bookNameM = generateFilename(23)
+    bookNameA = generateFilename(7)
+    bookNameN = generateFilename(15)
     if not server or not server.noop()[0] == 250:
         print('Email server is down!')
         server = initEmailServer()
 
     senderEmail = 'martinreahydroformbinemailer@gmail.com'
-    #, 'hasan.khan@martinrea.com', 'siyeon.jung@martinrea.com' , 'sankalp.kodandera@martinrea.com'
-    mailing_list = ['neil.patel@martinrea.com'] # add brian.rankin@martinrea.com and olivia.milnaric (and darren)
+
+    mailing_list = ['neil.patel@martinrea.com', 'hasan.khan@martinrea.com', 'siyeon.jung@martinrea.com' , 'sankalp.kodandera@martinrea.com'] # add brian.rankin@martinrea.com and olivia.milnaric (and darren)
     receiverEmail = ", ".join(mailing_list)
 
     # Make an email with excel attachment
     message = MIMEMultipart("alternative")
 
-    message["Subject"] = "Weld Tally Report - " + tim 
-    body = 'Please find the tool-crib report below.'
-    with open(dir + '\\' + bookName, "rb") as f:
-        excelAttachment = MIMEApplication(f.read(),_subtype="txt")
-        excelAttachment.add_header('Content-Disposition','attachment',filename=bookName)
-        message.attach(excelAttachment)
+    message["Subject"] = "Weld Tally Report - " + date 
+    body = 'Please find the Weld Tally Report below.'
+    
+    try:
+        f = open(dir + '\\' + bookNameM)
+    except FileNotFoundError:
+        pass
+    else:
+        with open(dir + '\\' + bookNameM, "rb") as f:
+            csvAttachment = MIMEApplication(f.read(),_subtype="txt")
+            csvAttachment.add_header('Content-Disposition','attachment',filename=bookNameM)
+            message.attach(csvAttachment)
+
+    try:
+        f = open(dir + '\\' + bookNameA)
+    except FileNotFoundError:
+        pass
+    else:
+        with open(dir + '\\' + bookNameA, "rb") as f:
+            csvAttachment = MIMEApplication(f.read(),_subtype="txt")
+            csvAttachment.add_header('Content-Disposition','attachment',filename=bookNameA)
+            message.attach(csvAttachment)
+            
+    try:
+        f = open(dir + '\\' + bookNameN)
+    except FileNotFoundError:
+        pass
+    else:        
+        with open(dir + '\\' + bookNameN, "rb") as f:
+            csvAttachment = MIMEApplication(f.read(),_subtype="txt")
+            csvAttachment.add_header('Content-Disposition','attachment',filename=bookNameN)
+            message.attach(csvAttachment)
 
     message["From"] = senderEmail
     message["To"] = receiverEmail
@@ -134,13 +147,15 @@ def sendEmail(server):
     # Send the email
     try:
         server.sendmail('martinreahydroformbinemailer@gmail.com', mailing_list, message.as_string())
-        os.remove(dir + '\\' + bookName)
+        os.remove(dir + '\\' + bookNameM)
+        os.remove(dir + '\\' + bookNameA)
+        os.remove(dir + '\\' + bookNameN)
         return True
 
-    except:
+    except FileNotFoundError:
         logging.exception('email sending unsuccessful')
         return False
-    
+
 def emailAndArchive():
     s = initEmailServer()
     sendEmail(s)
