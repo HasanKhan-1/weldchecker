@@ -24,12 +24,12 @@ def generateFilename(h):
     t = time.localtime()
     date = time.strftime("%Y-%m-%d_", t)
     shift = ""
-    if(23 <= h < 7):
+    if(23 <= h or h < 7):
         shift = "Night"
     elif(7 <= h < 15):
         shift = "Morning"
     else:   
-        shift = "Night"
+        shift = "Afternoon"
     date = date + shift + "_Shift"
     file_name = "Weld_Tally_Report_" + date + ".csv"
     return file_name
@@ -49,8 +49,6 @@ def removeBook(path):
     os.remove(path)
     
 def archiveBook():
-    hour = int(time.strftime("%H"))
-    small_file = generateFilename(hour - 1)
     t = time.localtime()
     date = time.strftime("%Y-%m-%d", t)
     big_file = "Weld_Tally_Report_" + date + ".csv"
@@ -60,6 +58,11 @@ def archiveBook():
             file.write("Time, WeldReworkId, WeldReworkReasonCode\n")
     except FileExistsError:
         pass
+    copyFile(dir, big_file, generateFilename(7))
+    copyFile(dir, big_file, generateFilename(15))
+    copyFile(dir, big_file, generateFilename(23))
+
+def copyFile(dir, big_file, small_file):
     file = open(dir + '\\' + small_file, "r")
     lines = file.readlines()
     bigger_file = open(dir + '\\' + big_file, "a")
@@ -92,16 +95,16 @@ def sendEmail(server):
     dir = makeDir()
     t = time.localtime()
     date = time.strftime("%Y-%m-%d", t)
-    bookNameM = generateFilename(23)
     bookNameA = generateFilename(7)
     bookNameN = generateFilename(15)
+    bookNameM = generateFilename(23)
     if not server or not server.noop()[0] == 250:
         print('Email server is down!')
         server = initEmailServer()
 
     senderEmail = 'martinreahydroformbinemailer@gmail.com'
-
-    mailing_list = ['neil.patel@martinrea.com', 'hasan.khan@martinrea.com', 'siyeon.jung@martinrea.com' , 'sankalp.kodandera@martinrea.com'] # add brian.rankin@martinrea.com and olivia.milnaric (and darren)
+    # , 'hasan.khan@martinrea.com', 'siyeon.jung@martinrea.com' , 'sankalp.kodandera@martinrea.com'
+    mailing_list = ['neil.patel@martinrea.com'] # add brian.rankin@martinrea.com and olivia.milnaric (and darren)
     receiverEmail = ", ".join(mailing_list)
 
     # Make an email with excel attachment
@@ -147,12 +150,9 @@ def sendEmail(server):
     # Send the email
     try:
         server.sendmail('martinreahydroformbinemailer@gmail.com', mailing_list, message.as_string())
-        os.remove(dir + '\\' + bookNameM)
-        os.remove(dir + '\\' + bookNameA)
-        os.remove(dir + '\\' + bookNameN)
         return True
 
-    except FileNotFoundError:
+    except:
         logging.exception('email sending unsuccessful')
         return False
 
@@ -163,7 +163,7 @@ def emailAndArchive():
     s.quit()
     print("*Warcraft Peasant Voice* Job's done!")
 
-schedule.every().day.at("07:00", tz="America/New_York").do(emailAndArchive)
+schedule.every().day.at("10:53", tz="America/New_York").do(emailAndArchive)
 
 t = threading.Thread(target=runner)
 t.daemon = True
