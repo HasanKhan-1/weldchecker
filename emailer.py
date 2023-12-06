@@ -9,13 +9,15 @@ current_hour = time.localtime().tm_hour
 
 tag_list = ['WeldReworkReasonCode', 'WeldReworkId', 'WeldTechLogged']
 t = time.localtime()
-date = time.strftime("%Y-%m-%d_", t)
+year = t.tm_year
+month = t.tm_mon
+day = t.tm_mday
+curr_time = str(t.tm_hour) +":"+str(t.tm_min)+ ":"+ str(t.tm_sec)
+print("The current time is: "+ curr_time+ " The date is: "+ str(year) +"/"+str(month)+"/"+ str(day))
 
 # Check if it's time to generate the file (every 8 hours starting at 7 am)
 
-if current_hour == 7 or (current_hour - 7) % 8 == 0:
-
-     
+if current_hour == 7 or (current_hour - 7) % 8 == 0:     
   hour = int(time.strftime("%H"))
   # make a new file 
 
