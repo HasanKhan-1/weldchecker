@@ -1,13 +1,20 @@
-
 import csv
 import time
 from pylogix import PLC
 
-
-
 current_hour = time.localtime().tm_hour
 
 tag_list = ['WeldReworkReasonCode', 'WeldReworkId', 'WeldTechLogged']
+reason_codes = {
+    "0": "Nothing",
+    "1": "Weld of location",
+    "2": "Weld burn through",
+    "3": "Weld Gap Issues",
+    "4": "Wire feeding issues",
+    "5": "Gap Issues/weld Porosity",
+    "6": "Bad tip/consumables",
+    "7": "Change of weld parameters"
+}
 t = time.localtime()
 year = t.tm_year
 month = t.tm_mon
@@ -56,6 +63,3 @@ with PLC() as comm:
             time.sleep(1)
     else:
         pass
-
-
-

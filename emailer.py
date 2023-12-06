@@ -19,20 +19,8 @@ import os
 def generateFilename(h):
     t = time.localtime()
     date = time.strftime("%Y-%m-%d_", t)
-    hour = ((h) + 3) % 24
-    hour2 = hour - (hour % 3)
-    hour1 = hour2 - 3
-    if(hour1 < 10):
-        date = date + '0' + str(hour1)
-    else: 
-        date = date + str(hour1)
-    date = date + '00-'
-    if(hour2 < 10):
-        date = date + '0' + str(hour2)
-    else: 
-        date = date + str(hour2)
     date = date + '00'
-    file_name = "Tool_Crib_Log_" + date + ".csv"
+    file_name = "Weld_Tally_Report_" + date + ".csv"
     return file_name
 
 def makeDir():
@@ -132,7 +120,7 @@ def sendEmail(server):
     # Make an email with excel attachment
     message = MIMEMultipart("alternative")
 
-    message["Subject"] = "Tool Crib Report - " + tim 
+    message["Subject"] = "Weld Tally Report - " + tim 
     body = 'Please find the tool-crib report below.'
     with open(dir + '\\' + bookName, "rb") as f:
         excelAttachment = MIMEApplication(f.read(),_subtype="txt")
@@ -154,14 +142,10 @@ def sendEmail(server):
         return False
     
 def emailAndArchive():
-    global database
     s = initEmailServer()
     sendEmail(s)
     archiveBook()
-    # print("Book archived under name " + str(bname))
     s.quit()
-    # copyMasterTable()
-    # database = read_excel2("\\\hydfsrv\\Purchasing\\MRO\\")
     print("*Warcraft Peasant Voice* Job's done!")
 
 schedule.every().day.at("07:00", tz="America/New_York").do(emailAndArchive)
