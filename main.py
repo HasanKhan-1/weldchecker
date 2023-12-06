@@ -1,11 +1,8 @@
 import csv
 import time
 from pylogix import PLC
-<<<<<<< HEAD
 from emailer import *
 
-=======
->>>>>>> 3862c66d28b7d029b185481ecfb2fa48ae653b91
 
 current_hour = time.localtime().tm_hour
 
@@ -20,6 +17,7 @@ reason_codes = {
     "6": "Bad tip/consumables",
     "7": "Change of weld parameters"
 }
+
 t = time.localtime()
 year = t.tm_year
 month = t.tm_mon
@@ -64,7 +62,7 @@ with PLC() as comm:
 
     if (ret[2]):
 
-        write_data = [('WeldReworkReasonCode', ret[0]),
+        write_data = [('WeldReworkReasonCode', reason_codes[ret[0]]),
                     ('WeldReworkId', ret[1])]
 
         with open(bookName, 'w') as csv_file: # need to change the name of the file 
