@@ -2,7 +2,7 @@
 import csv
 import time
 from pylogix import PLC
-
+from emailer import *
 
 
 current_hour = time.localtime().tm_hour
@@ -39,6 +39,11 @@ with PLC() as comm:
     comm.IPAddress = '10.10.14.12'
     ret = comm.Read(tag_list)
 
+    dir = makeDir()
+    # bookName = "Tool_Crib_Log-" + date + ".csv"
+    hour = int(time.strftime("%H"))
+    bookName = generateFilename(hour - 1)
+
     # for testing 
     for r in ret:
         print(r.Value)
@@ -50,12 +55,9 @@ with PLC() as comm:
         write_data = [('WeldReworkReasonCode', ret[0]),
                     ('WeldReworkId', ret[1])]
 
-        with open('31_log.csv', 'w') as csv_file: # need to change the name of the file 
+        with open(bookName, 'w') as csv_file: # need to change the name of the file 
             csv_file = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             csv_file.writerows(write_data)
             time.sleep(1)
     else:
         pass
-
-
-
