@@ -163,7 +163,7 @@ def emailAndArchive():
     s.quit()
     print("*Warcraft Peasant Voice* Job's done!")
 
-schedule.every().day.at("10:53", tz="America/New_York").do(emailAndArchive)
+schedule.every().day.at("12:46", tz="America/New_York").do(emailAndArchive)
 
 t = threading.Thread(target=runner)
 t.daemon = True

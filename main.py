@@ -2,6 +2,9 @@ import time
 from pylogix import PLC
 from emailer import *
 
+def write_header(file):
+    file.write("curr_time, WeldReworkId, WeldReworkReasonCode\n")
+
 current_hour = time.localtime().tm_hour
 
 tag_list = ['WeldReworkReasonCode', 'WeldReworkId', 'WeldTechLogged']
@@ -16,11 +19,11 @@ reason_codes = {
     7: "Change of weld parameters"
 }
 
-t = time.localtime()
-curr_time = str(t.tm_hour) + ":" + str(t.tm_min) + ":" + str(t.tm_sec)
-file_name = ""
 
 while True:
+    file_name = ""
+    t = time.localtime()
+    curr_time = str(t.tm_hour) + ":" + str(t.tm_min) + ":" + str(t.tm_sec)
     hour = int(time.strftime("%H"))
     dir = makeDir()
     curr_time = str(t.tm_hour) + ":" + str(t.tm_min) + ":" + str(t.tm_sec)
@@ -30,25 +33,19 @@ while True:
         hour = int(time.strftime("%H"))
         # make a new file
         file_name = dir + '\\' + generateFilename(hour)
+        print("File name: "+ file_name)
         with open(file_name, 'w', newline='') as csv_file:
-            csv_file.write("curr_time, WeldReworkId, WeldReworkReasonCode\n")
+            write_header(csv_file)
 
     # Read from the PLC
     with PLC() as comm:
         comm.IPAddress = '10.10.14.12'
         ret = comm.Read(tag_list)
 
-        if curr_time == "7:00:0" or curr_time == "15:00:0" or curr_time == "23:00:0":
-            hour = int(time.strftime("%H"))
-            # make a new file
-            file_name = dir + '\\' + generateFilename(hour)
-            with open(file_name, 'w', newline='') as csv_file:
-                csv_file.write("curr_time, WeldReworkId, WeldReworkReasonCode\n")
-
-        if ret[2].Value:  # Writes out if our WeldTechlogged is True
-            print("This is my file name: %s", curr_time)
+        if ret[2]:  # Writes out if our WeldTechlogged is True
+            # print("This is my file name: ", curr_time)
             file_name = dir + '\\' + generateFilename(hour)
             with open(file_name, 'a') as csv_file:
                 csv_file.write(f"{curr_time}, {ret[1].Value}, {reason_codes[ret[0].Value]}\n")
 
-        time.sleep(100)
+        time.sleep(25)
