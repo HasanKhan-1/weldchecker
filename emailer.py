@@ -34,6 +34,20 @@ def generateFilename(h):
     file_name = "Weld_Tally_Report_" + date + ".csv"
     return file_name
 
+def generateFilenameForEmail(h):
+    t = datetime.now() - timedelta(days=1)
+    date = t.strftime("%Y-%m-%d_")
+    shift = ""
+    if(23 <= h or h < 7):
+        shift = "Night"
+    elif(7 <= h < 15):
+        shift = "Morning"
+    else:   
+        shift = "Afternoon"
+    date = date + shift + "_Shift"
+    file_name = "Weld_Tally_Report_" + date + ".csv"
+    return file_name
+
 def makeDir():
     t = time.localtime()
     month_year = time.strftime("%b-%Y", t)
@@ -58,9 +72,9 @@ def archiveBook():
             file.write("Time, WeldReworkId, WeldReworkReasonCode\n")
     except FileExistsError:
         pass
-    copyFile(dir, big_file, generateFilename(7))
-    copyFile(dir, big_file, generateFilename(15))
-    copyFile(dir, big_file, generateFilename(23))
+    copyFile(dir, big_file, generateFilenameForEmail(7))
+    copyFile(dir, big_file, generateFilenameForEmail(15))
+    copyFile(dir, big_file, generateFilenameForEmail(23))
 
 def copyFile(dir, big_file, small_file):
     file = open(dir + '\\' + small_file, "r")
@@ -95,16 +109,16 @@ def sendEmail(server):
     dir = makeDir()
     t = time.localtime()
     date = time.strftime("%Y-%m-%d", t)
-    bookNameA = generateFilename(7)
-    bookNameN = generateFilename(15)
-    bookNameM = generateFilename(23)
+    bookNameA = generateFilenameForEmail(7)
+    bookNameN = generateFilenameForEmail(15)
+    bookNameM = generateFilenameForEmail(23)
     if not server or not server.noop()[0] == 250:
         print('Email server is down!')
         server = initEmailServer()
 
     senderEmail = 'martinreahydroformbinemailer@gmail.com'
     # , 'hasan.khan@martinrea.com', 'siyeon.jung@martinrea.com' , 'sankalp.kodandera@martinrea.com'
-    mailing_list = ['neil.patel@martinrea.com'] # add brian.rankin@martinrea.com and olivia.milnaric (and darren)
+    mailing_list = ['neil.patel@martinrea.com', 'hasan.khan@martinrea.com', 'siyeon.jung@martinrea.com' , 'sankalp.kodandera@martinrea.com'] # add brian.rankin@martinrea.com and olivia.milnaric (and darren)
     receiverEmail = ", ".join(mailing_list)
 
     # Make an email with excel attachment
@@ -163,7 +177,7 @@ def emailAndArchive():
     s.quit()
     print("*Warcraft Peasant Voice* Job's done!")
 
-schedule.every().day.at("12:46", tz="America/New_York").do(emailAndArchive)
+schedule.every().day.at("7:00", tz="America/New_York").do(emailAndArchive)
 
 t = threading.Thread(target=runner)
 t.daemon = True
